@@ -17,7 +17,8 @@ An open source electron app helps to download and organize all of your uni's mat
         pip install google-auth google-auth-oauthlib
         pip install google-api-python-client
         pip install python-dotenv  
-       
+        pip install requests
+        
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;press enter and wait for the last command to complete its execution and then close the command prompt.
 
   Step 3:<br>
