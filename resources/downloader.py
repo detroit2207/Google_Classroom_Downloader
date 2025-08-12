@@ -23,6 +23,29 @@ from googleapiclient.errors import HttpError
 
 from cryptography.fernet import Fernet
 
+import os
+import sys
+
+class Logger:
+    def __init__(self, filename):
+        self.terminal = sys.stdout  # for stdout, will replace later with sys.stderr for stderr
+        self.log = open(filename, "a", encoding="utf-8")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+
+log_file_path = os.path.join(os.getcwd(), "downloader.log")
+
+# Redirect stdout and stderr separately, with separate Logger instances:
+sys.stdout = Logger(log_file_path)
+sys.stderr = Logger(log_file_path)
+
+
 
 from dotenv import load_dotenv
 import os
