@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Classroom Downloader</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
+
+    <style>
+        /* Base styles for layout and background */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0; 
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Rubik', sans-serif;
+            background-color: #000000; /* Dark background for the animation */
+            overflow: hidden;
+        }
+
+        /* Canvas for the animated background */
+        #background-canvas {
+            position: fixed; /* Use fixed to stay in place */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0; /* Behind the UI */
+            pointer-events: none; /* Let mouse events pass through */
+        }
+
+        /* Main UI container */
+        #app {
+            position: relative;
+            z-index: 1; /* On top of the canvas */
+            max-width: 720px;
+            width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Rubik', sans-serif;
+            background: rgba(255, 255, 255, 0.85); /* Semi-transparent so background is visible */
+            border-radius: 1rem;
+
+            backdrop-filter: blur(0.01);
+            background-color: transparent;
+            min-height: 50vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* All other UI styles from your second file */
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 720px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            margin: 0 0 20px 0;
+            font-size: 2.5rem;
+            text-align: center;
+            background: linear-gradient(90deg, #8b0000 29%, #4b0082 70%);
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .input-button-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .input {
+            flex: 1;
+            max-width: 400px;
+            height: 44px;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 0 1rem;
+            border: 2px solid transparent;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, color 0.3s ease, background 0.2s ease;
+            color: #000000;
+        }
+
+        .input::placeholder {
+            color: #05060f99;
+        }
+
+        .input:hover, .input:focus {
+            outline: none;
+            border-color: #ff0000;
+        }
+
+        button {
+            font-size: 16px;
+            position: relative;
+            padding: 1em 2.5em;
+            border: none;
+            background: #fff;
+            transition: all 0.1s linear;
+            box-shadow: 0 0.4em 1em rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border-radius: 2em;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+            background-color: #000000;
+            
+        }
+        button:active span {
+            color: #000000;
+        }
+
+        button span {
+            color: #464646;
+        }
+
+        button .border {
+            position: absolute;
+            border: 0.15em solid #fff;
+            transition: all 0.3s 0.08s linear;
+            top: 50%;
+            left: 50%;
+            width: 9em;
+            height: 3em;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            border-radius: 2em;
+        }
+
+        button:hover .border {
+            width: 9.3em;
+            height: 3.2em;
+        }
+        button:hover{
+            background: #676900;
+        }
+        button:hover span {
+            color: #fff;
+        }
+
+        #progressBox {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 22px;
+            background: #eee;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        #progressFill {
+            height: 100%;
+            width: 0%;
+            background: #008000;
+            text-align: center;
+            color: #fff;
+            line-height: 22px;
+            font-weight: 600;
+            transition: width 0.3s ease;
+        }
+
+        #fileName {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        #message {
+            margin-top: 12px;
+            font-size: 1rem;
+            min-height: 1.5em;
+            text-align: center;
+        }
+        body {
+  user-select: none;
+}
+
+input, textarea, button {
+  user-select: text; /* allow selection inside form controls */
+}
+
+    </style>
+</head>
+<body>
+    <canvas id="background-canvas"></canvas>
+
+    <div id="app">
+        <div class="wrapper">
+            <h2>Google Classroom Downloader</h2>
+            <div class="input-button-row">
+                <input autocomplete="off" id="link" class="input" type="text" placeholder="Paste Google Classroom link (or course id)">
+                <button id="start">
+                    <span>Download</span>
+                    <div class="border"></div>
+                </button>
+            </div>
+            <div id="progressBox">
+                <div id="progressBar">
+                    <div id="progressFill">0%</div>
+                </div>
+                <div id="fileName"></div>
+            </div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- SCRIPT 1: Background Animation Logic ---
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        const PARTICLE_COUNT = 80;
+        const MAX_LINE_DISTANCE = 150;
+        const MOUSE_RADIUS = 200;
+        const PARTICLE_COLOR = 'rgba(255, 255, 255, 0.8)';
+        let particles = [];
+        const mouse = { x: null, y: null };
+
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+                if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = PARTICLE_COLOR;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function connect() {
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const distance = Math.sqrt(Math.pow(particles[a].x - particles[b].x, 2) + Math.pow(particles[a].y - particles[b].y, 2));
+                    if (distance < MAX_LINE_DISTANCE) {
+                        const opacity = 1 - (distance / MAX_LINE_DISTANCE);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.2})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+                if (mouse.x !== null) {
+                    const distanceToMouse = Math.sqrt(Math.pow(particles[a].x - mouse.x, 2) + Math.pow(particles[a].y - mouse.y, 2));
+                    if (distanceToMouse < MOUSE_RADIUS) {
+                        const opacity = 1 - (distanceToMouse / MOUSE_RADIUS);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.4})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            connect();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { setCanvasSize(); init(); });
+        window.addEventListener('mousemove', (event) => { mouse.x = event.x; mouse.y = event.y; });
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+        
+        setCanvasSize();
+        init();
+        animate();
+
+        // --- SCRIPT 2: UI and Electron IPC Logic ---
+        // Note: The 'require' function will only work in an Electron environment.
+        const { ipcRenderer } = require('electron');
+        const linkInput = document.getElementById('link');
+        const startBtn = document.getElementById('start');
+        const progressBox = document.getElementById('progressBox');
+        const progressFill = document.getElementById('progressFill');
+        const fileName = document.getElementById('fileName');
+        const message = document.getElementById('message');
+
+        startBtn.addEventListener('click', () => {
+            const link = linkInput.value.trim();
+            if (!link) {
+                message.textContent = "Enter a classroom link or id.";
+                message.style.color = 'red';
+                return;
+            }
+            message.textContent = "Download started...";
+            message.style.color = 'black';
+            progressBox.style.display = "block";
+            progressFill.style.width = "0%";
+            progressFill.textContent = "0%";
+            fileName.textContent = "";
+            ipcRenderer.send('download-request', link);
+        });
+
+        ipcRenderer.on('download-progress', (event, { percent, file, current, total }) => {
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = percent + '%';
+            fileName.textContent = `(${current}/${total}) ${file}`;
+        });
+
+        ipcRenderer.on('download-complete', (event, { success, path, error }) => {
+            if (success) {
+                message.textContent = `✅ Done. Saved: ${path}`;
+                message.style.color = 'green';
+            } else {
+                message.textContent = `❌ Error: ${error}`;
+                message.style.color = 'red';
+            }
+        });
+
+        ipcRenderer.on('download-error', (evt, payload) => {
+            console.error(payload);
+        });
+    </script>
+</body>
+</html>
